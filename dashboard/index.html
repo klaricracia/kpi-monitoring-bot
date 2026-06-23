@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KPI Monitoring Bot — Klarissa Artavia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue:#4100F5; --fuchsia:#F037A5; --tangerine:#FF4632;
+      --black:#191414; --surface:#1E1A1A; --surface2:#252020;
+      --text:#F5F5F0; --muted:#9E9A9A;
+      --grad:linear-gradient(135deg,#4100F5,#F037A5,#FF4632);
+    }
+    html,body { background:var(--black); color:var(--text); font-family:'Arimo',sans-serif; min-height:100vh; }
+
+    header { background:var(--black); border-bottom:1px solid #2a2525; padding:20px 40px; display:flex; align-items:center; justify-content:space-between; }
+    .logo-pill { background:var(--grad); border-radius:8px; width:40px; height:40px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:15px; color:#fff; flex-shrink:0; }
+    .header-title h1 { font-weight:900; font-size:18px; letter-spacing:-0.03em; }
+    .header-title p { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--blue); letter-spacing:0.2em; text-transform:uppercase; margin-top:2px; }
+    .badge { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.15em; padding:4px 10px; border-radius:4px; text-transform:uppercase; }
+    .badge-blue { background:var(--blue); color:#fff; }
+    .badge-green { background:#00C48C22; color:#00C48C; border:1px solid #00C48C44; }
+    .badge-outline { border:1px solid #3a3535; color:var(--muted); }
+
+    .hero { background:var(--grad); padding:48px 40px 40px; position:relative; overflow:hidden; }
+    .hero::before { content:''; position:absolute; right:-60px; top:-60px; width:300px; height:300px; border-radius:50%; background:rgba(255,255,255,0.07); }
+    .hero-label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.25em; text-transform:uppercase; color:rgba(255,255,255,0.75); margin-bottom:12px; }
+    .hero h2 { font-weight:900; font-size:clamp(26px,4vw,42px); letter-spacing:-0.045em; line-height:1.05; color:#fff; max-width:640px; }
+    .hero p { margin-top:12px; font-size:15px; color:rgba(255,255,255,0.8); max-width:560px; line-height:1.5; }
+
+    .kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:#2a2525; border-bottom:1px solid #2a2525; }
+    .kpi-card { background:var(--surface); padding:28px 32px; }
+    .kpi-label { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+    .kpi-value { font-weight:900; font-size:30px; letter-spacing:-0.04em; line-height:1; }
+    .kpi-sub { font-size:12px; color:var(--muted); margin-top:4px; }
+    .accent-grad .kpi-value { background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .accent-blue .kpi-value { color:var(--blue); }
+    .accent-tang .kpi-value { color:var(--tangerine); }
+    .accent-fuch .kpi-value { color:var(--fuchsia); }
+
+    .main { padding:32px 40px; display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+    .full { grid-column:1/-1; }
+    .card { background:var(--surface); border-radius:12px; border:1px solid #2a2525; padding:28px; }
+    .card-sub { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:var(--blue); margin-bottom:4px; }
+    .card-title { font-weight:900; font-size:16px; letter-spacing:-0.03em; margin-bottom:24px; }
+
+    /* Alert timeline */
+    .alert-item { display:flex; gap:16px; padding:14px 0; border-bottom:1px solid #2a2525; align-items:flex-start; }
+    .alert-item:last-child { border-bottom:none; }
+    .alert-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:5px; }
+    .alert-kpi { font-weight:700; font-size:13px; }
+    .alert-date { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:0.1em; margin-top:2px; }
+    .alert-val { font-family:'JetBrains Mono',monospace; font-size:11px; margin-top:4px; }
+    .dir-drop { color:var(--tangerine); }
+    .dir-spike { color:var(--fuchsia); }
+
+    /* Status pills */
+    .status-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+    .status-item { background:var(--surface2); border-radius:8px; padding:16px; border:1px solid #2a2525; }
+    .status-name { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.15em; color:var(--muted); text-transform:uppercase; margin-bottom:6px; }
+    .status-val { font-weight:900; font-size:20px; letter-spacing:-0.03em; }
+
+    footer { padding:28px 40px; border-top:1px solid #2a2525; display:flex; align-items:center; justify-content:space-between; }
+    footer p { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); }
+    footer a { color:var(--blue); text-decoration:none; }
+
+    @media(max-width:900px){ .kpi-row{grid-template-columns:1fr 1fr;} .main{grid-template-columns:1fr; padding:20px;} .status-grid{grid-template-columns:1fr 1fr;} }
+  </style>
+</head>
+<body>
+
+<header>
+  <div style="display:flex;align-items:center;gap:14px;">
+    <div class="logo-pill">KA</div>
+    <div class="header-title">
+      <h1>Klarissa Artavia</h1>
+      <p>Data &amp; AI Strategy · AI Transformation</p>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;">
+    <span class="badge badge-green">● BOT ACTIVE</span>
+    <span class="badge badge-blue">PROJECT LAUNCH</span>
+    <span class="badge badge-outline">Python · Anomaly Detection</span>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-label">Case Study · Automation & Analytics</div>
+  <h2>KPI Monitoring Bot</h2>
+  <p>Automated anomaly detection across revenue, customer segments, and inventory — replacing daily manual checks with a bot that runs every morning and alerts before anyone notices.</p>
+</div>
+
+<div class="kpi-row">
+  <div class="kpi-card accent-grad">
+    <div class="kpi-label">KPIs Monitored</div>
+    <div class="kpi-value">6</div>
+    <div class="kpi-sub">Revenue · Segments · Inventory</div>
+  </div>
+  <div class="kpi-card accent-tang">
+    <div class="kpi-label">Alerts Triggered (Demo)</div>
+    <div class="kpi-value">7</div>
+    <div class="kpi-sub">Across 365 days of data</div>
+  </div>
+  <div class="kpi-card accent-blue">
+    <div class="kpi-label">Detection Method</div>
+    <div class="kpi-value">Z-Score</div>
+    <div class="kpi-sub">14-day rolling window · ±2σ threshold</div>
+  </div>
+  <div class="kpi-card accent-fuch">
+    <div class="kpi-label">Alert Channels</div>
+    <div class="kpi-value">2</div>
+    <div class="kpi-sub">Email + Slack</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Revenue time series -->
+  <div class="card full">
+    <div class="card-sub">Revenue Monitoring</div>
+    <div class="card-title">Daily Revenue — Anomalies Highlighted</div>
+    <div style="position:relative;height:300px;">
+      <canvas id="revenueChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Alert log -->
+  <div class="card">
+    <div class="card-sub">Alert History</div>
+    <div class="card-title">Triggered Alerts (Demo Run)</div>
+    <div id="alertList"></div>
+  </div>
+
+  <!-- Bot config status -->
+  <div class="card">
+    <div class="card-sub">Bot Configuration</div>
+    <div class="card-title">Monitored KPIs &amp; Thresholds</div>
+    <div class="status-grid" id="kpiStatus"></div>
+  </div>
+
+  <!-- Segment monitoring chart -->
+  <div class="card full">
+    <div class="card-sub">Segment Monitoring</div>
+    <div class="card-title">At-Risk Customers Over Time — Spike Detection</div>
+    <div style="position:relative;height:240px;">
+      <canvas id="segmentChart"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p>Klarissa Artavia · <a href="https://github.com/klaricracia" target="_blank">github.com/klaricracia</a> · <a href="https://www.linkedin.com/in/klariartavia/" target="_blank">linkedin.com/in/klariartavia</a></p>
+  <p>Python · Z-Score Detection · Email + Slack Alerts · 2024</p>
+</footer>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────────
+// 365-day revenue (simplified for dashboard)
+const seed = (s) => { let x=Math.sin(s)*10000; return x-Math.floor(x); };
+const revenue = [], atRisk = [];
+let anomalyDays = new Set([45,120,200,310,340]);
+let atRiskSpike = new Set([...Array(15)].map((_,i)=>200+i));
+
+for(let i=0;i<365;i++){
+  let base = 18000 + i*8 + 3000*Math.sin(2*Math.PI*i/7) + (seed(i*7)-0.5)*2400;
+  if(i===45)  base -= 9000;
+  if(i===120) base += 12000;
+  if(i===200) base -= 8500;
+  if(i===310) base += 10000;
+  if(i===340) base -= 11000;
+  revenue.push(Math.max(2000, Math.round(base)));
+  atRisk.push(186 + Math.round((seed(i*3)-0.5)*24) + (atRiskSpike.has(i)?60:0));
+}
+
+const labels = [];
+const start = new Date('2024-01-01');
+for(let i=0;i<365;i++){
+  const d = new Date(start); d.setDate(d.getDate()+i);
+  labels.push(d.toISOString().slice(0,10));
+}
+
+Chart.defaults.font.family = "'Arimo', sans-serif";
+Chart.defaults.color = '#9E9A9A';
+
+// Revenue chart
+const revColors = revenue.map((_,i) => anomalyDays.has(i) ? '#FF4632' : '#4100F580');
+const revBorder = revenue.map((_,i) => anomalyDays.has(i) ? '#FF4632' : '#4100F5');
+
+new Chart(document.getElementById('revenueChart'),{
+  type:'bar',
+  data:{
+    labels,
+    datasets:[{
+      label:'Daily Revenue',
+      data:revenue,
+      backgroundColor: revColors,
+      borderColor: revBorder,
+      borderWidth:0,
+      borderRadius:1,
+    },{
+      label:'14-day Avg',
+      data: revenue.map((_,i)=>{
+        if(i<14) return null;
+        return Math.round(revenue.slice(i-14,i).reduce((a,b)=>a+b,0)/14);
+      }),
+      type:'line',
+      borderColor:'#F037A5',
+      borderWidth:1.5,
+      pointRadius:0,
+      tension:0.4,
+      fill:false,
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{labels:{color:'#F5F5F0',font:{size:11,weight:'700'},boxWidth:10,boxHeight:10}},
+      tooltip:{
+        backgroundColor:'#252020', titleColor:'#F5F5F0', bodyColor:'#9E9A9A',
+        borderColor:'#3a3535', borderWidth:1,
+        callbacks:{label:ctx=>`$${ctx.parsed.y.toLocaleString()}`}
+      }
+    },
+    scales:{
+      x:{display:false},
+      y:{
+        grid:{color:'#2a2525'},
+        ticks:{color:'#9E9A9A',font:{family:"'JetBrains Mono',monospace",size:10},callback:v=>`$${(v/1000).toFixed(0)}K`}
+      }
+    }
+  }
+});
+
+// Segment chart
+new Chart(document.getElementById('segmentChart'),{
+  type:'line',
+  data:{
+    labels,
+    datasets:[{
+      label:'At-Risk Customers',
+      data:atRisk,
+      borderColor:'#F037A5',
+      backgroundColor:'#F037A510',
+      borderWidth:2,
+      pointRadius:0,
+      fill:true,
+      tension:0.3,
+    },{
+      label:'Alert Threshold (250)',
+      data:Array(365).fill(250),
+      borderColor:'#FF463260',
+      borderWidth:1,
+      borderDash:[6,4],
+      pointRadius:0,
+      fill:false,
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{labels:{color:'#F5F5F0',font:{size:11,weight:'700'},boxWidth:10,boxHeight:10}},
+      tooltip:{backgroundColor:'#252020',titleColor:'#F5F5F0',bodyColor:'#9E9A9A',borderColor:'#3a3535',borderWidth:1}
+    },
+    scales:{
+      x:{display:false},
+      y:{grid:{color:'#2a2525'},ticks:{color:'#9E9A9A',font:{family:"'JetBrains Mono',monospace",size:10}}}
+    }
+  }
+});
+
+// Alert list
+const ALERTS = [
+  {date:'2024-02-15',kpi:'Daily Revenue',  value:'$11,325', expected:'$18,383', dev:'-38.4%', dir:'drop',  z:'-4.06'},
+  {date:'2024-04-30',kpi:'Daily Revenue',  value:'$34,702', expected:'$19,277', dev:'+80.0%', dir:'spike', z:'+6.77'},
+  {date:'2024-07-19',kpi:'Daily Revenue',  value:'$11,437', expected:'$19,116', dev:'-40.2%', dir:'drop',  z:'-2.65'},
+  {date:'2024-07-19',kpi:'At-Risk Customers',value:'215',  expected:'185',    dev:'+16.4%', dir:'spike', z:'+2.21'},
+  {date:'2024-11-06',kpi:'Daily Revenue',  value:'$34,261', expected:'$19,993', dev:'+71.4%', dir:'spike', z:'+5.95'},
+  {date:'2024-12-06',kpi:'Daily Revenue',  value:'$11,477', expected:'$20,840', dev:'-44.9%', dir:'drop',  z:'-3.92'},
+  {date:'2024-12-06',kpi:'New Customers',  value:'10',     expected:'25',     dev:'-60.2%', dir:'drop',  z:'-2.01'},
+];
+
+const al = document.getElementById('alertList');
+ALERTS.forEach(a=>{
+  const isDrop = a.dir==='drop';
+  al.innerHTML += `
+    <div class="alert-item">
+      <div class="alert-dot" style="background:${isDrop?'#FF4632':'#F037A5'}"></div>
+      <div style="flex:1;">
+        <div class="alert-kpi">${a.kpi}</div>
+        <div class="alert-date">${a.date}</div>
+        <div class="alert-val ${isDrop?'dir-drop':'dir-spike'}">
+          ${isDrop?'▼':'▲'} ${a.value} &nbsp;·&nbsp; expected ${a.expected} &nbsp;·&nbsp;
+          <span style="font-weight:700;">${a.dev}</span> &nbsp;·&nbsp; z=${a.z}
+        </div>
+      </div>
+      <span class="badge" style="background:${isDrop?'#FF463220':'#F037A520'};color:${isDrop?'#FF4632':'#F037A5'};border:1px solid ${isDrop?'#FF463240':'#F037A540'};font-size:9px;align-self:flex-start;">
+        ${isDrop?'DROP':'SPIKE'}
+      </span>
+    </div>`;
+});
+
+// KPI status grid
+const KPIS = [
+  {name:'Revenue',    val:'$19.5K avg', color:'#4100F5'},
+  {name:'Avg Order',  val:'$96 avg',    color:'#4100F5'},
+  {name:'New Custm.', val:'22/day avg', color:'#4100F5'},
+  {name:'At-Risk',    val:'187 avg',    color:'#F037A5'},
+  {name:'Lost Custm.',val:'1,534 avg',  color:'#F037A5'},
+  {name:'Stockouts',  val:'4% rate',    color:'#FF4632'},
+];
+const ks = document.getElementById('kpiStatus');
+KPIS.forEach(k=>{
+  ks.innerHTML += `
+    <div class="status-item">
+      <div class="status-name">${k.name}</div>
+      <div class="status-val" style="color:${k.color}">${k.val}</div>
+    </div>`;
+});
+</script>
+</body>
+</html>
