@@ -1,0 +1,15 @@
+date,kpi_key,kpi_label,value,expected,deviation,z_score,direction,trigger,message
+2024-02-15,revenue,Daily Revenue,11324.93,18382.519285714287,-38.39293829110241,-4.06,drop,zscore,38.4% below 14-day average
+2024-04-30,revenue,Daily Revenue,34701.86,19277.22357142857,80.01482356324802,6.77,spike,zscore,80.0% above 14-day average
+2024-07-19,revenue,Daily Revenue,11437.11,19116.097142857143,-40.17026637535396,-2.65,drop,zscore,40.2% below 14-day average
+2024-07-19,at_risk_customers,At-Risk Customers,215,184.64285714285714,16.441005802707934,2.21,spike,zscore,16.4% above 14-day average
+2024-11-06,revenue,Daily Revenue,34261.38,19992.641428571424,71.36995190158896,5.95,spike,zscore,71.4% above 14-day average
+2024-12-06,revenue,Daily Revenue,11476.88,20839.84857142857,-44.92819868309984,-3.92,drop,zscore,44.9% below 14-day average
+2024-12-06,new_customers,New Customers,10,25.142857142857142,-60.22727272727273,-2.01,drop,zscore,60.2% below 14-day average
+2024-02-15,revenue,Daily Revenue,11324.93,18382.519285714287,-38.39293829110241,-4.06,drop,zscore,38.4% below 14-day average
+2024-04-30,revenue,Daily Revenue,34701.86,19277.22357142857,80.01482356324802,6.77,spike,zscore,80.0% above 14-day average
+2024-07-19,revenue,Daily Revenue,11437.11,19116.097142857143,-40.17026637535396,-2.65,drop,zscore,40.2% below 14-day average
+2024-07-19,at_risk_customers,At-Risk Customers,215,184.64285714285714,16.441005802707934,2.21,spike,zscore,16.4% above 14-day average
+2024-11-06,revenue,Daily Revenue,34261.38,19992.641428571424,71.36995190158896,5.95,spike,zscore,71.4% above 14-day average
+2024-12-06,revenue,Daily Revenue,11476.88,20839.84857142857,-44.92819868309984,-3.92,drop,zscore,44.9% below 14-day average
+2024-12-06,new_customers,New Customers,10,25.142857142857142,-60.22727272727273,-2.01,drop,zscore,60.2% below 14-day average
