@@ -1,0 +1,73 @@
+# ─────────────────────────────────────────────────────────────────
+# KPI Monitoring Bot — Configuration
+# Author: Klarissa Artavia · Data & AI Strategy
+# ─────────────────────────────────────────────────────────────────
+
+# Data source
+data:
+  path: "data/daily_kpis.csv"
+  date_column: "date"
+
+# Anomaly detection settings
+# method: "zscore" (statistical) or "pct_change" (% drop from rolling avg)
+detection:
+  method: "zscore"
+  window: 14          # rolling window in days
+  zscore_threshold: 2.0  # flag if value deviates > 2 std deviations
+
+# KPIs to monitor
+kpis:
+  revenue:
+    column: "revenue"
+    label: "Daily Revenue"
+    alert_on: "both"        # "drop", "spike", or "both"
+    min_threshold: 10000    # hard floor — always alert below this
+
+  avg_order_value:
+    column: "avg_order_value"
+    label: "Avg Order Value"
+    alert_on: "drop"
+    min_threshold: 60
+
+  new_customers:
+    column: "new_customers"
+    label: "New Customers"
+    alert_on: "drop"
+
+  at_risk_customers:
+    column: "at_risk"
+    label: "At-Risk Customers"
+    alert_on: "spike"       # alert when this goes UP
+    max_threshold: 250      # hard ceiling
+
+  lost_customers:
+    column: "lost_customers"
+    label: "Lost Customers"
+    alert_on: "spike"
+
+  stockouts:
+    column: "stockout_flag"
+    label: "Stockout Events"
+    alert_on: "spike"
+
+# Email alerts
+email:
+  enabled: true
+  smtp_host: "smtp.gmail.com"
+  smtp_port: 587
+  sender: "your.email@gmail.com"
+  password: "your_app_password"     # use Gmail App Password, not your main password
+  recipients:
+    - "your.email@gmail.com"
+
+# Slack alerts
+slack:
+  enabled: true
+  webhook_url: "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+  channel: "#kpi-alerts"
+  username: "KPI Bot"
+
+# Output
+output:
+  log_path: "output/alert_log.csv"
+  report_path: "output/last_report.json"
